@@ -1,0 +1,307 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>6.2</ProjectVersion>
+    <ToolchainName>com.Atmel.AVRGCC8.C</ToolchainName>
+    <ProjectGuid>{331a41fe-dded-4947-948c-7b62a09e1881}</ProjectGuid>
+    <avrdevice>ATmega32A</avrdevice>
+    <avrdeviceseries>none</avrdeviceseries>
+    <OutputType>Executable</OutputType>
+    <Language>C</Language>
+    <OutputFileName>$(MSBuildProjectName)</OutputFileName>
+    <OutputFileExtension>.elf</OutputFileExtension>
+    <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
+    <AssemblyName>ClockMatrix</AssemblyName>
+    <Name>ClockMatrix</Name>
+    <RootNamespace>ClockMatrix</RootNamespace>
+    <ToolchainFlavour>Native</ToolchainFlavour>
+    <KeepTimersRunning>true</KeepTimersRunning>
+    <OverrideVtor>false</OverrideVtor>
+    <OverrideVtorValue>exception_table</OverrideVtorValue>
+    <eraseonlaunchrule>0</eraseonlaunchrule>
+    <ProgFlashFromRam>true</ProgFlashFromRam>
+    <RamSnippetAddress>0x20000000</RamSnippetAddress>
+    <CacheFlash>true</CacheFlash>
+    <UncachedRange />
+    <BootSegment>2</BootSegment>
+    <AsfFrameworkConfig>
+      <framework-data xmlns="">
+        <options />
+        <configurations />
+        <files />
+        <documentation help="" />
+        <offline-documentation help="" />
+        <dependencies>
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.8.1" />
+        </dependencies>
+      </framework-data>
+    </AsfFrameworkConfig>
+    <avrtoolinterface />
+    <avrtool>com.atmel.avrdbg.tool.simulator</avrtool>
+    <com_atmel_avrdbg_tool_simulator>
+      <ToolType>com.atmel.avrdbg.tool.simulator</ToolType>
+      <ToolName>Simulator</ToolName>
+      <ToolNumber>
+      </ToolNumber>
+      <StimuliFile>
+      </StimuliFile>
+      <Channel>
+        <host>127.0.0.1</host>
+        <port>3539</port>
+        <ssl>False</ssl>
+      </Channel>
+      <ToolOptions>
+        <InterfaceProperties>
+          <JtagEnableExtResetOnStartSession>false</JtagEnableExtResetOnStartSession>
+        </InterfaceProperties>
+        <InterfaceName>
+        </InterfaceName>
+      </ToolOptions>
+    </com_atmel_avrdbg_tool_simulator>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <ToolchainSettings>
+      <AvrGcc>
+        <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+        <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+        <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+        <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+        <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+        <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+        <avrgcc.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>F_CPU=20000000UL</Value>
+            <Value>NDEBUG</Value>
+          </ListValues>
+        </avrgcc.compiler.symbols.DefSymbols>
+        <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
+        <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+        <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+        <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+        <avrgcc.linker.libraries.Libraries>
+          <ListValues>
+            <Value>libm</Value>
+          </ListValues>
+        </avrgcc.linker.libraries.Libraries>
+      </AvrGcc>
+    </ToolchainSettings>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <ToolchainSettings>
+      <AvrGcc>
+        <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+        <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+        <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+        <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+        <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
+        <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+        <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+        <avrgcc.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>F_CPU=20000000UL</Value>
+            <Value>DEBUG</Value>
+          </ListValues>
+        </avrgcc.compiler.symbols.DefSymbols>
+        <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
+        <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+        <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+        <avrgcc.compiler.optimization.DebugLevel>Maximum (-g3)</avrgcc.compiler.optimization.DebugLevel>
+        <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+        <avrgcc.linker.libraries.Libraries>
+          <ListValues>
+            <Value>libm</Value>
+          </ListValues>
+        </avrgcc.linker.libraries.Libraries>
+        <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
+      </AvrGcc>
+    </ToolchainSettings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Alarm.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Alarm.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="bmp180hal.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="bmp180hal.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="C:\Espressif\Web_base\app\user\Include\clock_web.h">
+      <SubType>compile</SubType>
+      <Link>clock_web.h</Link>
+    </Compile>
+    <Compile Include="esp8266hal.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="esp8266hal.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ds18b20.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ds18b20.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FIFO.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="i2c_ExtTmpr.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="IRMultiHAL.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="IRMultiHAL.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="nRF24L01P Reg.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="nRF24L01P.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="nRF24L01P.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="OneWare.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="OneWare.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sensors.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sensors.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Volume.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Volume.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="IRrecive.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="IRrecive.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="IRreciveHAL.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="IRreciveHAL.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="mmc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="pff.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="pff.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Sound.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="avrlibdefs.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="avrlibtypes.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="bits_macros.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="CalcClock.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="CalcClock.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Clock.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ClockMatrix.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="diskio.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Display.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Display.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="DisplayHAL.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="DisplayHAL.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="eeprom.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="eeprom.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="EERTOS.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="EERTOS.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="EERTOSHAL.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="EERTOSHAL.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="i2c.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="i2c_RTC.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="IIC_ultimate.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="IIC_ultimate.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="integer.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="keyboard.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="keyboard.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="MenuControl.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="MenuControl.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Sound.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="VolumeHAL.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="VolumeHAL.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="_StackInstrument.c">
+      <SubType>compile</SubType>
+    </Compile>
+  </ItemGroup>
+  <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
+</Project>
