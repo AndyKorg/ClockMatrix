@@ -1,5 +1,11 @@
 # ClockMatrix
 Watch with Internet &amp; music &amp; temperature sensor on radio &amp; IR control<br>
+<a href=https://www.youtube.com/watch?v=78SUxy-wHTI>Demo video</a><br>
+<a href=http://radiokot.ru/circuit/digital/home/199/>Article</a><br>
+<a href=http://radiokot.ru/forum/viewtopic.php?f=25&t=103293>Forum article</a><br>
+<a href=https://github.com/AndyKorg/esp8266web>Software for esp8266</a><br>
+<a href=http://esp8266.ru/forum/>Forum esp8266.ru</a><br>
+<a href=https://github.com/AndyKorg/TempSensorDSandNRF24/tree/master>External temp sensor</a><br>
 Часы на atmega32, DS3231, nRF24L01, esp8266<br>
 Что умеют:<br>
 1 Отсчет времени - очень высокая точность за счет термокомпенсированного генератора ds3231<br>
