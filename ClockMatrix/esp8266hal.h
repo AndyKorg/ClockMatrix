@@ -40,8 +40,5 @@ void espVolumeTx(enum tVolumeType Type);						//Передать в модуль режим работы с
 void espSendSensor(u08 numSensor);								//Передать в модуль значение датчика NumSensor
 void espGetIPStation(void);										//Запуск получения IP адреса модуля в режиме station
 void espNetNameSet(void);										//Авторизация в сети по имени и парою с sd карты
-#ifdef DEBUG
-	void UartDebugOut(u08 *ptr, u08 Len);
-#endif
 
 #endif /* ESP8266HAL_H_ */

@@ -153,6 +153,7 @@ void IRReciveRdy(u08 AdresIR, u32 CommandIR){
 		SetTimerTask(IRStartFromDelay, SCAN_PERIOD_KEY);
 	}//if (AdresIR == REMOT_TV_ADR)
 #ifdef IR_SAMSUNG_ONLY
+	#warning "IR reciver for sensors not debug"
 	else{												//Какие-то другие данные, не от пульта ТВ
 		SetSensor(AdresIR, AdresIR, CommandIR);			//Пока считаем что это данные от внешнего датчика температуры. Поскольку байт AdresIR получаемый от датчика содержит и статус и адрес, но в разных ниблах, то он просто передается два раза.
 	}

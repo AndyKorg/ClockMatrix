@@ -19,7 +19,6 @@
 
 #define DS_REPEAT_0XFF			3				//Количество повторных попыток чтения температуры 0xff, для минимизации ошибок
 
-void StartMeasureDS18(void);					//Начать измерение температуры
 void ErrorEvent(void);							//Вызывается при ошибке на шине
 
 /************************************************************************/
@@ -41,7 +40,7 @@ void ReadMeasurementComplet(void){
 			m2 = val;							//Запоминаем второе измерение на всякий случай
 			break;
 		case 3:
-			if ((m2 == val) || (m1 == val)){		//Совпадает с одним из предыдущих измерений, считаем истинным
+			if ((m2 == val) || (m1 == val)){	//Совпадает с одним из предыдущих измерений, считаем истинным
 				mOk = 1;
 			}
 			i = 0; m1=0; m2=0;					//Не совпадают ни с одним. Запускаем цикл заново
@@ -56,10 +55,9 @@ void ReadMeasurementComplet(void){
 			struct sSensor Sens;				//Ввел сюда структуру, что бы было видно, что здесь работаем со статусом датчика
 			Sens.State = 0;
 			SensorSetInBus(Sens);				//Сенсор на шине обнаружен
-			SetSensor(SENSOR_DS18B20, Sens.State, val);	//Записать в массив датчиков
-			if ((ClockStatus == csSensorSet) && (SetStatus == ssSensWaite)){	//Если режим ожидания датчика, то сразу обновить экран
-				Refresh();
-				SetTimerTask(StartMeasureDS18, DS18B20_ERRPEPEAT_READ);	//В режиме тестирования повторение измерения произвоится часто
+			SensotTypeTemp(Sens);				//Датчик температуры
+			if (SetSensor(SENSOR_DS18B20, Sens.State, val) == SENSOR_SHOW_TEST){//Записать в массив датчиков
+				SetTimerTask(StartMeasureDS18, SENSOR_TEST_REPEAT);
 			}
 			return;
 		}
@@ -113,11 +111,11 @@ void StartMeasureDS18(void){
 /* Ошибка операции на шине                                              */
 /************************************************************************/
 void ErrorEvent(void){
-	struct sSensor Sens;						//Ввел сюда структуру, что бы было видно, что здесь работаем со статусом датчика
+	struct sSensor Sens;											//Ввел сюда структуру, что бы было видно, что здесь работаем со статусом датчика
 	Sens.State = 0;
-	SensorNoInBus(Sens);						//Сенсор на шине НЕ обнаружен
-	SetSensor(SENSOR_DS18B20, Sens.State, 0);			//Запомнить полученный результат
-	SetTimerTask(StartMeasureDS18, DS18B20_REPEAT_READ);					//При ошибке попытаться прочитать еще раз шину
+	SensorNoInBus(Sens);											//Сенсор на шине НЕ обнаружен
+	SetSensor(SENSOR_DS18B20, Sens.State, 0);						//Запомнить полученный результат
+	SetTimerTask(StartMeasureDS18, DS18B20_REPEAT_READ);			//При ошибке попытаться прочитать еще раз шину
 	if ((ClockStatus == csSensorSet) && (SetStatus == ssSensWaite))	//Если режим ожидания датчика, то сразу обновить экран
 		Refresh();
 }

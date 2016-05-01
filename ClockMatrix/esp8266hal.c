@@ -20,10 +20,6 @@
 #include "Display.h"
 #include "eeprom.h"
 
-#ifdef DEBUG
-	#include "Display.h"
-#endif
-
 #ifdef ATMEGA644
 	#ifdef DEBUG
 		#include "usartDebug.h"
@@ -175,17 +171,6 @@ void espUartTx(u08 Cmd, u08* Value, u08 Len){
 	SetTimerTask(espTimeoutError, ESP_ERR_TIMEOUT);				//Таймаут ответа от модуля
 }
 
-#ifdef DEBUG
-void UartDebugOut(u08 *ptr, u08 Len){
-	if (Len < CLK_MAX_LEN_CMD)
-		espUartTx(ClkWrite(CLK_DEBUG), ptr, Len);
-	else{
-		u08 err[] = "buf owerflow";
-		espUartTx(ClkWrite(CLK_DEBUG), err, sizeof(err));
-	}
-}
-#endif
-
 /************************************************************************/
 /* Начальная установка переменных модуля                                */
 /************************************************************************/
@@ -325,7 +310,7 @@ ISR(ESP_UARTRX_vect){
 			else{
 				FIFO_PUSH(espRxBuf, rxbyte);					//Принимается поток данных и код команды
 			}
-			if (CountData){
+			if (CountData){										//Еще не все принято, продолжаем
 				CountData--;
 			}
 			else{												//Все принято
@@ -504,9 +489,6 @@ void UartVolumeSet(u08 cmd, u08* pval, u08 valLen){
 				EachHourSettingSwitch();				//Но надо все таки включить
 		}
 		EeprmStartWrite();								//Записать в eeprom
-#ifdef DEBUG
-SetTimerTask(espNetNameSet, 10000);
-#endif
 	}
 	else if ClkIsTest(cmd){								//Тест громкости
 		if (SoundIsBusy()){								//Прекратить звук если он звучит

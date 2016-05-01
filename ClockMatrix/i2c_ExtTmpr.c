@@ -18,10 +18,11 @@ void i2c_OK_ExtTmprFunc(void){
 	struct sSensor Sens;											//Ввел сюда структуру, что бы было видно, что здесь работаем со статусом датчика
 	Sens.State = 0;
 	SensorSetInBus(Sens);											//Сенсор на шине обнаружен
-	SetSensor(EXTERN_TEMP_ADR, Sens.State, i2c_Buffer[0]);			//Запомнить значение 
+	SensotTypeTemp(Sens);											//Датчик температуры
+	if (SetSensor(SENSOR_LM75AD, Sens.State, i2c_Buffer[0]) == SENSOR_SHOW_TEST){
+		SetTimerTask(i2c_ExtTmpr_Read, SENSOR_TEST_REPEAT);			//В режиме тестирования запустить новое измерение немедленно
+	}
 	i2c_Do &= i2c_Free;												//Освобождаем шину
-	if ((ClockStatus == csSensorSet) && (SetStatus == ssSensWaite))	//Если режим ожидания датчика, то сразу обновить экран
-		Refresh();
 }
 
 /************************************************************************/
@@ -34,13 +35,15 @@ void i2c_Err_ExtTmprFunc(void){
 		Attempt--;
 		if (Attempt)
 			SetTimerTask(i2c_ExtTmpr_Read, 2*REFRESH_CLOCK);		//Пробуем повторить операцию
-		else{														//После трех неудачных попыток опрос датчика прекращается
+		else{														//После трех неудачных попыток опрос датчика прекращается, но при тестировании повторяется
 			struct sSensor Sens;									//Ввел сюда структуру, что бы было видно, что здесь работаем со статусом датчика
 			Sens.State = 0;
 			SensorNoInBus(Sens);									//Сенсор на шине не обнаружен
-			SetSensor(EXTERN_TEMP_ADR, Sens.State, 0);				//Запомнить значение
-			if ((ClockStatus == csSensorSet) && (SetStatus == ssSensWaite))	//Если режим ожидания датчика, то сразу обновить экран
-				Refresh();
+			SensotTypeTemp(Sens);									//Датчик температуры
+			if (SetSensor(SENSOR_LM75AD, Sens.State, 0) == SENSOR_SHOW_TEST){	//Запомнить значение
+				SetTask(i2c_ExtTmpr_Read);							//В режиме тестирования запустить новое измерение немедленно
+				Attempt = 0;
+			}
 		}
 	}																
 	else	
@@ -49,14 +52,14 @@ void i2c_Err_ExtTmprFunc(void){
 }
 
 /************************************************************************/
-/* Чтение регистра из датчика температуры, пока только extmpradrTEMP    */
+/* Чтение регистра из датчика температуры на шине i2c				    */
 /************************************************************************/
 void i2c_ExtTmpr_Read(void){
 	if (i2c_Do & i2c_Busy){											//Шина занята, попытаемся позже
 		SetTimerTask(i2c_ExtTmpr_Read, REFRESH_CLOCK);
 		return;
 	}
-	i2c_SlaveAddress = EXTERN_TEMP_ADR;
+	i2c_SlaveAddress = SENSOR_LM75AD;
 	i2c_index = 0;													//Писать в буфер с нуля
 	i2c_Do &= ~i2c_type_msk;										//Сброс режима
 	i2c_ByteCount = i2c_ExtTmprBuffer;								//количество читаемых байт
@@ -70,8 +73,4 @@ void i2c_ExtTmpr_Read(void){
 	
 	TWCR = 1<<TWSTA|0<<TWSTO|1<<TWINT|0<<TWEA|1<<TWEN|1<<TWIE;      //Пуск операции
 	i2c_Do |= i2c_Busy;
-}
-
-void Init_i2cExtTmpr(void){											
-	SetTimerTask(i2c_ExtTmpr_Read, REFRESH_EXT_TMPR);				//Попробуем прочитать
 }

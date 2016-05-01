@@ -94,7 +94,7 @@ void AddNameWeekFull(const u08 NumDay){
 u32 bin2bcd_u32(u32 data, u08 result_bytes){
 	u32 result = 0; /*result*/
 	for (u08 cnt_bytes=(4 - result_bytes); cnt_bytes; cnt_bytes--) /* adjust input bytes */
-	data <<= 8;
+		data <<= 8;
 	for (u08 cnt_bits=(result_bytes << 3); cnt_bits; cnt_bits--) { /* bits shift loop */
 		/*result BCD nibbles correction*/
 		result += 0x33333333;
@@ -109,7 +109,7 @@ u32 bin2bcd_u32(u32 data, u08 result_bytes){
 		/*shift next bit of input to result*/
 		result <<= 1;
 		if (((u08)(data >> 24)) & 0x80)
-		result |= 1;
+			result |= 1;
 		data <<= 1;
 	}
 	return(result);

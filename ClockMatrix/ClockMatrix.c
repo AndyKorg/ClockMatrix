@@ -31,6 +31,7 @@
 #include "sensors.h"							//Обработка результатов измерения датчиков
 #include "ds18b20.h"							//Обслуживание термодатчика ds18b20
 #include "nRF24L01P.h"							//Радиомодуль
+#include "bmp180hal.h"							//Датчик давления
 #include "esp8266hal.h"							//Модуль работы с WiFi
 #ifdef VOLUME_IS_DIGIT
 #include "Volume.h"
@@ -163,35 +164,6 @@ void PhrazeWaitShow(void){
 }
 
 /************************************************************************/
-/* Вывести состояние датчика в режиме тестирования						*/
-/************************************************************************/
-void SensotTestShow(void){
-
-	ClearDisplay();
-	for(u08 i=0; i<SENSOR_MAX;i++){
-		if SensorTestModeIsOn(SensorFromIdx(i)){
-			u08 SensAdr = bin2bcd_u32(SensorFromIdx(i).Adr>>1, 1);
-			u08 SensVal = bin2bcd_u32(SensorFromIdx(i).Value, 1);
-			sputc(Tens(SensAdr), DIGIT3);
-			sputc(Unit(SensAdr), DIGIT2);
-			if (SensorBatareyIsLow(SensorFromIdx(i))){	//Низкий заряд батареи
-				sputc('б', DIGIT1);						//батареи
-				sputc('н', DIGIT0);						//нет
-			}
-			else if (SensorIsNo(SensorFromIdx(i))){//Сам датчик в устройстве не найден
-				sputc('д', DIGIT1);						//датчика
-				sputc('н', DIGIT0);						//нет
-			}
-			else{										//Все нормально, выводится текущее значение датчика
-				sputc(Tens(SensVal), DIGIT1);
-				sputc(Unit(SensVal), DIGIT0);
-			}
-			break;	
-		}
-	}
-}
-
-/************************************************************************/
 /* Показать состояние сигнала каждый час                                */
 /************************************************************************/
 void EachHourBeepShow(void){
@@ -321,6 +293,39 @@ void ShowYear(void){
 }
 
 /************************************************************************/
+/* Вывод давления                                                       */
+/*  либо в бегущую строку либо в фиксированные знакоместа				*/
+/************************************************************************/
+void PressureShow(u08 Value, u08 Fixed){
+	u08 Place1 = UNDEF_POS, Place2 = UNDEF_POS, Place3 = UNDEF_POS, Place0 = UNDEF_POS;
+	if (Fixed != UNDEF_POS){
+		Place0 = DIGIT0;
+		Place1 = DIGIT1;
+		Place2 = DIGIT2;
+		Place3 = DIGIT3;
+	}
+	u16 mmHg = bin2bcd_u32(PressureNormal(Value), 4);
+	sputc(Unit((u08)(mmHg>>8)), Place3);
+	sputc(Tens((u08)mmHg), Place2);
+	sputc(Unit((u08)mmHg), Place1);
+	if (Fixed == UNDEF_POS){
+		sputc('m', UNDEF_POS);
+		sputc('m', UNDEF_POS);
+		sputc(S_SPICA, UNDEF_POS);
+		sputc('р', UNDEF_POS);
+		sputc('т', UNDEF_POS);
+		sputc('.', UNDEF_POS);
+		sputc('с', UNDEF_POS);
+		sputc('т', UNDEF_POS);
+		sputc('.', UNDEF_POS);
+		sputc(BLANK_SPACE, UNDEF_POS);
+	}
+	else{
+		sputc('m', Place0);
+	}
+}
+
+/************************************************************************/
 /* Вывод значения температуры.											*/
 /*  либо в бегущую строку либо в фиксированные знакоместа				*/
 /************************************************************************/
@@ -332,7 +337,7 @@ void TemperatureShow(u08 Value, u08 Fixed){
 		Place3 = DIGIT3;
 		Place0 = DIGIT0;
 	}
-	if (Value & 0x80){									//Если отрицательная то в дополнительном коде
+	if (Value & 0x80){						//Если отрицательная то в дополнительном коде
 		sputc('–', Place3);
 		Value = ~Value;
 	}
@@ -341,34 +346,9 @@ void TemperatureShow(u08 Value, u08 Fixed){
 	Value = bin2bcd_u32(Value & 0x7f, 1);
 	sputc(Tens(Value), Place2);
 	sputc(Unit(Value), Place1);
-	sputc('°', Place0);										// знак градуса
-}
-
-
-/************************************************************************/
-/* Вывод значения датчика	                                           */
-/************************************************************************/
-void SensorCreepShow(char *Nam, u08 Value){
-	
-	sputc(' ', UNDEF_POS);
-	for(u08 j=0; j < SENSOR_LEN_NAME; j++){		//Имя датчика
-		if (Nam[j]){
-			sputc(Nam[j], UNDEF_POS);
-			sputc(S_SPICA, UNDEF_POS);
-		}
-		else
-			break;
-	}
-	sputc(S_SPICA, UNDEF_POS);
-	if (Value != TMPR_NO_SENS){					//Температура действительна
-		TemperatureShow(Value, UNDEF_POS);
-		sputc('C', UNDEF_POS);					// большая C
-	}
-	else{
-		sputc('-', UNDEF_POS);
-		sputc('-', UNDEF_POS);
-	}
-	sputc(S_SPICA, UNDEF_POS);
+	sputc('°', Place0);						// знак градуса
+	if (Fixed == UNDEF_POS)
+		sputc('C', UNDEF_POS);				// большая C только для режима бегущей строки
 }
 
 /************************************************************************/
@@ -387,12 +367,28 @@ void ShowDate(void){
 	sputc(Unit(Watch.Date), UNDEF_POS);
 	sputc(' ', UNDEF_POS);
 	AddNameMonth(Watch.Month);						//Название месяца
+	struct sSensor sensor;
 	for(i=0; i<SENSOR_MAX; i++){					//Вывод результатов для датчиков
-		if (SensorIsShow(SensorFromIdx(i))){
-			if (SensorFromIdx(i).SleepPeriod == 0)	//сообщения от датчика не были получены в течение длительного периода
-				SensorCreepShow(SensorFromIdx(i).Name, TMPR_NO_SENS);
-			else
-				SensorCreepShow(SensorFromIdx(i).Name, (SensorIsNo(SensorFromIdx(i)))?TMPR_NO_SENS:SensorFromIdx(i).Value);
+		sensor = SensorFromIdx(i);
+		if (SensorIsShow(sensor)){
+			sputc(' ', UNDEF_POS);
+			for(u08 j=0; j < SENSOR_LEN_NAME; j++){	//Имя датчика
+				if (sensor.Name[j]){
+					sputc(sensor.Name[j], UNDEF_POS);
+					sputc(S_SPICA, UNDEF_POS);
+				}
+				else
+					break;
+			}
+			sputc(S_SPICA, UNDEF_POS);
+			if (SensorFromIdx(i).SleepPeriod == 0){	//сообщения от датчика не были получены в течение длительного периода
+				sputc('-', UNDEF_POS);
+				sputc('-', UNDEF_POS);
+			}
+			else{
+				(SensorIsPress(sensor))?PressureShow(sensor.Value, UNDEF_POS):TemperatureShow(sensor.Value, UNDEF_POS);
+			}
+			sputc(S_SPICA, UNDEF_POS);
 		}
 	}
 }
@@ -614,22 +610,20 @@ void SensNameSet(void){
 /* температура, пока датчика нет выводится сообщение "ждем"				*/
 /************************************************************************/
 void SensWait(void){
-	//u08 Tempr = SensorFromIdx(CurrentSensorShow).Value;
+	struct sSensor sens = SensorFromIdx(CurrentSensorShow);
 
 	ClearDisplay();
-	if SensorIsSet(SensorFromIdx(CurrentSensorShow)){			//Есть какой-то ответ (от радиодатичка может быть ответ, но сам датчик может не ответить)
-		if (SensorFromIdx(CurrentSensorShow).Value != TMPR_NO_SENS){								//Какой-то законный ответ
-			TemperatureShow(SensorFromIdx(CurrentSensorShow).Value, DIGIT0);
+	if SensorIsSet(sens){										//Есть датчик
+		if (SensorIsPress(SensorFromIdx(CurrentSensorShow))){
+			PressureShow(SensorFromIdx(CurrentSensorShow).Value, DIGIT0);
 		}
 		else{
-			sputc('p',DIGIT3);									//Есть сигнал от радиодатичка, но нет ответа от самого датчика
-			sputc(' ',DIGIT2);
-			sputc('e',DIGIT1);
-			sputc('r',DIGIT0);
+			TemperatureShow(SensorFromIdx(CurrentSensorShow).Value, DIGIT0);
 		}
 	}
-	else
+	else{														//Нет датчика
 		PhrazeWaitShow();
+	}
 }
 
 #ifndef IR_SAMSUNG_ONLY
@@ -920,11 +914,6 @@ void SetClockStatus(enum tClockStatus Val, enum tSetStatus SetVal){
 					SettingProcess(FontShow, ALL_FLASH);
 					SetSecondFunc(FontShow);
 					break;
-				case ssSensorTest:						//Нажата кнопка тест на одном из внешних датчиков
-					SetSecondFunc(Idle);				
-					SensotTestShow();
-					Refresh = SensotTestShow;
-					break;
 #ifdef VOLUME_IS_DIGIT
 				case ssVolumeBeep:						//Громкость нажатия кнопок
 					ClearDisplay();
@@ -1008,29 +997,35 @@ void SetClockStatus(enum tClockStatus Val, enum tSetStatus SetVal){
 					sputc(' ',UNDEF_POS);
 					break;
 				case ssSensName1:						//Выбор первой буквы имени
-					CurrentSensorAlphaNumAndIrCode = 0;
-					SettingProcess(SensorsAlphaShow, NO_FLASH);
-					sputc(S_FLASH_ON, DIGIT2);
-					break;
 				case ssSensName2:						//Выбор второй буквы имени
-					FlashSet(NO_FLASH);
-					sputc(S_FLASH_ON, DIGIT1);
-					CurrentSensorAlphaNumAndIrCode++;
-					break;
 				case ssSensName3:						//Выбор третьей буквы имени
-					FlashSet(NO_FLASH);
-					sputc(S_FLASH_ON, DIGIT0);
-					CurrentSensorAlphaNumAndIrCode++;
+					if (SetVal == ssSensName1){
+						CurrentSensorAlphaNumAndIrCode = 0;
+						SettingProcess(SensorsAlphaShow, NO_FLASH);
+					}
+					else{
+						CurrentSensorAlphaNumAndIrCode++;
+						FlashSet(NO_FLASH);
+					}
+					sputc(S_FLASH_ON, CurrentSensorAlphaNumAndIrCode+1);
 					break;
 				case ssSensWaite:						//Ожидание датчика. 
 					SetSecondFunc(Idle);
-					SensorFromIdx(CurrentSensorShow).Value = TMPR_NO_SENS;		//Считаем что температура недействительна
 					SensorNoInBus(SensorFromIdx(CurrentSensorShow));			//Датчика на шине нет
 					SettingProcess(SensWait, NO_FLASH);
-					if (SensorFromIdx(CurrentSensorShow).Adr == SENSOR_DS18B20) //Стартуем сначала измерение потом выводим результат
-						StartMeasureDS18();
-					else if (SensorFromIdx(CurrentSensorShow).Adr == (EXTERN_TEMP_ADR & SENSOR_ADR_MASK)) //И для датчика на шине I2C
-						i2c_ExtTmpr_Read();
+					switch (SensorFromIdx(CurrentSensorShow).Adr){
+						case (SENSOR_DS18B20 & SENSOR_ADR_MASK):				//Стартуем сначала измерение потом выводим результат
+							StartMeasureDS18();
+							break;
+						case (SENSOR_LM75AD & SENSOR_ADR_MASK):					//И для датчика lm75ad на шине I2C
+							i2c_ExtTmpr_Read();
+							break;
+						case (SENSOR_BMP180 & SENSOR_ADR_MASK):					//Для датчика bmp180 на шине I2C
+							StartMeasuringBMP180();
+							break;
+						default:
+							break;
+					}
 					break;
 				default:
 					break;
@@ -1104,8 +1099,9 @@ int main(void)
 
 	InitKeyboard();												//Клавиатура
 
-	Init_i2cExtTmpr();											//Инициализация внешнего датчика на шине I2C
+	i2c_ExtTmpr_Read();											//Инициализация внешнего датчика на шине I2C
 	StartMeasureDS18();											//Старт измерения температуры на датчике ds18b20
+	StartMeasuringBMP180();										//Датчик давления
 	
 	SoundIni();													//генератор ШИМ звука и работа с SD-картой
 

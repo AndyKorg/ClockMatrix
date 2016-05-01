@@ -61,9 +61,9 @@ ISR(INT_NAME_RTC){
 		if (Go0Second != Idle)										//Есть функция проверки будильника?
 			(Go0Second)();
 		if ((Watch.Minute & 0xf) == 0){								//Десять минут прошло
-			i2c_ExtTmpr_Read();										//Прочитать внешний датчик температуры
+			SetTask(i2c_ExtTmpr_Read);								//Прочитать внешний датчик температуры
 			SetTask(StartMeasureDS18);								//Прочитать данные с датчика 1-Ware
-			SetTask(BMP180_StartMeasuring);
+			SetTask(StartMeasuringBMP180);
 		}
 		for(u08 i=0; i<= SENSOR_MAX; i++)							//Уменьшить счетчик периода для всех датчиков
 			if (SensorFromIdx(i).SleepPeriod)

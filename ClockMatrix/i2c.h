@@ -20,7 +20,6 @@
 
 //---------  Адреса устройств на шине i2c. Младший бит - это флаг чтения-записи в протоколе i2c
 #define RTC_ADR					0b11010000			//Адрес RTC
-#define EXTERN_TEMP_ADR			0b10011110			//Адрес LM75AD
 
 //*********  Обслуживание i2c интерфейса RTC *********************
 #define REFRESH_CLOCK		100						//период чтения значения текущего времени из микросхемы часов
@@ -115,7 +114,6 @@ extern volatile u08 OneSecond;					//Меняет значение 0-1 каждую секунду
 #define OSQueModeExtTmpr0	3					//Количество превышений температуры для ноги OS
 #define OSQueModeExtTmpr1	4
 
-void Init_i2cExtTmpr(void);						//Инициализация наружного датчика температуры
-void i2c_ExtTmpr_Read(void);					//Запуск получения результатов измерения
+void i2c_ExtTmpr_Read(void);					//Запуск чтения датчика lm75a
 
 #endif /* I2C_H_ */

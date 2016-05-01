@@ -90,9 +90,11 @@ void nRF_Recive(void){
 	}
 #endif
 
-	Sens.State = 0;
-	SensorNoInBus(Sens);								//Ответа от радиодатчика еще нет
 	Sens.Value = 0;										//Это что бы компилятор не выкидывал предупреждение
+	Sens.State = 0;
+	SensorNoInBus(Sens);								//Ответа от датчика еще нет
+	SensorRFNoBus(Sens);								//Радиодатчик не ответил
+	SensotTypeTemp(Sens);								//Датчик температуры
 	nRF_NoAnswer();
 	nRF_STOP();											//Остановить работу радиотракта
 
@@ -111,9 +113,9 @@ void nRF_Recive(void){
 			nRF_cmd_Write(nRF_FLUSH_RX, 0, Buf);		//Очистить буфера FIFO
 			
 			if ((Buf[0] == nRF_RESERVED_BYTE) && (Buf[1] == nRF_TMPR_ATTNY13_SENSOR)){	//Правильный пакет
-				SensorSetInBus(Sens);													//Есть ответ от радиодатчика
+				SensorRFInBus(Sens);													//Есть ответ от радиодатчика
 				if ((((u16)Buf[2]<<8) | ((u16)Buf[3])) == nRF_SENSOR_NO)				//Сенсор на шине не обнаружен
-					Sens.Value = TMPR_NO_SENS;											//Сам датчик не отвечает
+					SensorNoInBus(Sens);												//Сам датчик не отвечает
 				else
 					Sens.Value = ( ((Buf[2]<<4) & 0xf0) | ((Buf[3]>>4) & 0x0f) );		//Значение температуры
 				if ((ClockStatus == csSensorSet) && (SetStatus == ssSensWaite)			//Если режим ожидания именно этого датчика, то следующая передача через 1 секунду
@@ -139,10 +141,7 @@ void nRF_Recive(void){
 	}
 
 	if nRF_AnswerIsOk(){
-		SetSensor(nRF_RX_PIP_READY_BIT_LEFT(Status), Sens.State, Sens.Value);	//Записать данные в массив датчиков. Адрес датчика сдвинут. Подробнее см. в объявлении SetSensor
-		if ((ClockStatus == csSensorSet) && (SetStatus == ssSensWaite)){		//Если режим ожидания датчика, то сразу обновить экран
-			Refresh();
-		}
+		SetSensor(nRF_RX_PIP_READY_BIT_LEFT(Status), Sens.State, Sens.Value);			//Записать данные в массив датчиков. Адрес датчика сдвинут. Подробнее см. в объявлении SetSensor
 	}
 
 	SetTimerTask(nRF_Recive, nRF_PERIOD_TEST);

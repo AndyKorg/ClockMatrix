@@ -8,13 +8,15 @@
 #include "EERTOS.h"
 #include "IIC_ultimate.h"
 #include "bmp180hal.h"
+#include "Clock.h"
+#include "sensors.h"
 
 #ifndef DEBUG
 #define DEBUG
 #warning "Debug ON!!"
 #endif
 #ifdef DEBUG
-#include "_usart.h"
+//#include "_usart.h"
 #endif
 
 u08 BMP180_Flag;											//Счетчик и флаги. 0,1,2,3,4 биты счетчик адреса регистров коэфф. 
@@ -24,6 +26,8 @@ u08 BMP180_Flag;											//Счетчик и флаги. 0,1,2,3,4 биты счетчик адреса реги
 #endif
 #define bmp180_AddrCoffIsEnd()		((BMP180_Flag & BMP180_ADR_COFF_MASK) == BMP180_COFF_COUNT)	//Достигнут конечный адрес. 
 #define bmp180_AdrCoffCount()		(BMP180_Flag & BMP180_ADR_COFF_MASK) //значение счетчика 
+
+#define PASKAL_TO_MM_H(val)			(val/133)				//Перевод Па в мм.рт.ст.
 
 #define BMP180_TWO_EXPONENT_16		16						//2 в 16-й степени
 #define BMP180_TWO_EXPONENT_15		15
@@ -37,22 +41,30 @@ u08 BMP180_Flag;											//Счетчик и флаги. 0,1,2,3,4 биты счетчик адреса реги
 
 s16 BMP180_Temper;
 s32 BMP180_Pressure;
-u08* BMP180Buf;												//Буфер для калибровочных коэффициентов
+u08* BMP180Buf	=	NULL;									//Буфер для калибровочных коэффициентов
 
 /************************************************************************/
 /* Обработка ошибки шины I2c                                            */
 /************************************************************************/
 void BMP180_ReadErr(void){
-	if (BMP180Buf != NULL)
+	if (BMP180Buf != NULL){
 		free(BMP180Buf);
-	i2c_Do |= i2c_Free;
+		BMP180Buf = NULL;
+	}
+	struct sSensor bmp180Sensor;
+	bmp180Sensor.State = 0;
+	SensorNoInBus(bmp180Sensor);							//Нет датчика на шине
+	SensorTypePress(bmp180Sensor);
+	if (SetSensor(SENSOR_BMP180, bmp180Sensor.State, 0) == SENSOR_SHOW_TEST){
+		SetTimerTask(StartMeasuringBMP180, BMP180_PRESRE_UL_RES_TIME>>1);
+	}
+	i2c_Do &= i2c_Free;										//Шину освобождаем
 }
 
 /************************************************************************/
 /* Заполнение параметров шины I2C                                       */
 /************************************************************************/
 void BMP180_I2C_Fill(u08 i2cCMD, u08 Adr, u08 Cmd, u08 ByteCount, IIC_F OKFunc){
-	i2c_Do |= i2c_Busy;												//Занять шину
 	if (i2cCMD == i2c_sawp){										//Запись команды
 		i2c_Buffer[0] = Adr;										//Адрес в режиме записи передается как обычный байт
 		i2c_Buffer[1] = Cmd;
@@ -69,8 +81,9 @@ void BMP180_I2C_Fill(u08 i2cCMD, u08 Adr, u08 Cmd, u08 ByteCount, IIC_F OKFunc){
 	i2c_PageAddrCount = 1;											//Длина адреса 1 байт
 	i2c_PageAddrIndex = 0;											//Адрес с нуля
 	MasterOutFunc = OKFunc;
-	ErrorOutFunc = BMP180_ReadErr;
+	ErrorOutFunc = &BMP180_ReadErr;
 	TWCR = 1<<TWSTA|0<<TWSTO|1<<TWINT|0<<TWEA|1<<TWEN|1<<TWIE;		//Пуск операции
+	i2c_Do |= i2c_Busy;												//Занять шину
 }
 
 inline s16 RawToSign16(u08 msb, u08 lsb){
@@ -112,6 +125,10 @@ inline u16 RawToUnsign16(u08 msb, u08 lsb){
 /************************************************************************/
 void BMP180_PressureCalc(void){
 
+	struct sSensor bmp180Sensor;
+	bmp180Sensor.State = 0;
+	SensorTypePress(bmp180Sensor);											//Это датчик давления
+	
 	struct {
 		s16 ac1;	//Калибровочные коэфф.
 		s16 ac2;
@@ -139,6 +156,7 @@ void BMP180_PressureCalc(void){
 	calib_param.mc = RawToSign16(*(BMP180Buf+BMP180_COEFFCNT_S_MC), *(BMP180Buf+BMP180_COEFFCNT_S_MC+1));
 	calib_param.md = RawToSign16(*(BMP180Buf+BMP180_COEFFCNT_S_MD), *(BMP180Buf+BMP180_COEFFCNT_S_MD+1));
 	free(BMP180Buf);												//Буфер больше не нужен
+	BMP180Buf = NULL;
 
 /*	printf("ac1=%d\n",calib_param.ac1);
 	printf("ac2=%d\n",calib_param.ac2);
@@ -187,21 +205,13 @@ void BMP180_PressureCalc(void){
 			v_x1_s32 = (v_x1_s32 * 3038) >> BMP180_TWO_EXPONENT_16;
 			v_x2_s32 = (v_pressure_s32 * (-7357)) >> BMP180_TWO_EXPONENT_16;
 			v_pressure_s32 += (v_x1_s32 + v_x2_s32 + 3791)>> BMP180_TWO_EXPONENT_4;	//Давление в Па
-			if ((v_pressure_s32 - (v_pressure_s32/1000)*1000) >419)
-				
-//				printf("%d\n",(s16)(v_pressure_s32/1000)+1);
-				//printl(v_pressure_s32);
-				BMP180_Pressure = BMP180_INVALID_DATA;
-			else
-				//printl(v_pressure_s32);
-//				printf("%d\n",(s16)v_pressure_s32/1000);
-				BMP180_Pressure = BMP180_INVALID_DATA;
+			u08 value = PressureShort((u32)PASKAL_TO_MM_H(v_pressure_s32));	//Привести к мм.рт.ст. и сместить результат в область значений от 0 до 255
+			SensorSetInBus(bmp180Sensor);
+			if (SetSensor(SENSOR_BMP180, bmp180Sensor.State, value) == SENSOR_SHOW_TEST){
+				SetTimerTask(StartMeasuringBMP180, SENSOR_TEST_REPEAT);
+			}
 		}
-		else
-			BMP180_Pressure = BMP180_INVALID_DATA;
 	}
-	else
-		BMP180_Temper = BMP180_INVALID_DATA;
 }
 
 /************************************************************************/
@@ -280,15 +290,15 @@ void BMP180_CoeffReadOk(void){
 /************************************************************************/
 /* Старт измерения                                                      */
 /************************************************************************/
-void BMP180_StartMeasuring(void){
+void StartMeasuringBMP180(void){
 	if (i2c_Do & i2c_Busy){											//Шина I2C занята, попытаемся позже
-		SetTimerTask(BMP180_StartMeasuring, BMP180_REPEAT_TIME_MS);
+		SetTimerTask(StartMeasuringBMP180, BMP180_REPEAT_TIME_MS);
 		return;
 	}
 	BMP180_Flag = 0;												//Сбросить счетчики
 	BMP180Buf = malloc(BMP180_COFF_COUNT);							//Захватить буфер для калибровочных коэфф.
 	if (BMP180Buf == NULL){											//Нету памяти повторить позже
-		SetTimerTask(BMP180_StartMeasuring, BMP180_REPEAT_TIME_MS);
+		SetTimerTask(StartMeasuringBMP180, BMP180_REPEAT_TIME_MS);
 		return;
 	}
 	BMP180_I2C_Fill(i2c_sawsarp,									//Старт чтения калибровочных коэфф.

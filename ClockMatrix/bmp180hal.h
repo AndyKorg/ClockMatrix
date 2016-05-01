@@ -1,8 +1,6 @@
 /*
  * Обслуживание датчика давления BNP180
  *
- * Created: 15.05.2015 15:52:40
- *  Author: Admin
  */ 
 
 
@@ -12,8 +10,6 @@
 #include "avrlibtypes.h"
 #include "eeprom.h"
 
-
-#define BMP180_ADDRESS				0b11101110	//Адрес датчика на шине I2C
 //Регистры
 #define BMP180_CONTROL_REG			0xf4		//Регистр управления
 #define BMP180_RESET_REG			0xe0		//Регистр программного сброса.
@@ -53,7 +49,7 @@
 #define	BMP180_TEMPER_LEN			2			//Длина данных температуры
 #define	BMP180_PRESS_LEN			3			//Длина данных давления
 
-#define BMP180_REPEAT_TIME_MS		30			//Период повторения запуска измерений если шина I2C занята
+#define BMP180_REPEAT_TIME_MS		50			//Период повторения запуска измерений если шина I2C занята
 
 //Используемое разрешение
 #define BMP180_PRESSURE_START		BMP180_PRESRE_NORMAL_START	//<<<<<------- изменить если требуется другая точность
@@ -77,7 +73,7 @@
 #define  BMP180_INVALID_DATA		0x1fff		//Ошибка получения давления и температуры
 typedef void (*PRESS_AND_TEMPER)(u16*, u16*);	//Функция вызываемая по окончании  измерения или таймаута
 
-void BMP180_StartMeasuring(void);
+void StartMeasuringBMP180(void);
 
 PRESS_AND_TEMPER PressureRead;
 
